@@ -1,5 +1,5 @@
 
-# SwapPro
+# SwapIQ
 
 SwapPro is a smart crypto swap platform that finds the best exchange routes, reduces fees, and maximizes user value.
 
