@@ -12,7 +12,8 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // ── Security / Middleware ──────────────────────────────────────────────────────
-app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
+// Default to same-origin only; set ALLOWED_ORIGIN env var to enable cross-origin access
+app.use(cors({ origin: process.env.ALLOWED_ORIGIN || false }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 

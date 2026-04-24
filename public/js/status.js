@@ -5,7 +5,7 @@
  *  - Reads transaction ID from URL query param ?id=
  *  - Polls /api/status/:id every 10 seconds
  *  - Shows step-by-step progress tracker
- *  - Colour-coded status badge
+ *  - Color-coded status badge
  *  - Displays provider, expected output, and blockchain hashes
  *  - Stops polling when terminal state reached (completed/failed/refunded/expired)
  *  - Manual stop / resume controls
