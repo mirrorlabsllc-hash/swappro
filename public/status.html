@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwapPro – Track Transaction</title>
+  <meta name="description" content="Track your SwapPro crypto swap in real time." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#f0fdf4', 400:'#4ade80', 500:'#22c55e', 600:'#16a34a', 700:'#15803d' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0f172a; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Step tracker */
+    .step-connector { flex: 1; height: 2px; background: #334155; }
+    .step-connector.active { background: #22c55e; }
+
+    /* Status colors */
+    .status-pending    { color: #fbbf24; }
+    .status-confirming { color: #60a5fa; }
+    .status-completed  { color: #4ade80; }
+    .status-failed     { color: #f87171; }
+    .status-refunded   { color: #a78bfa; }
+    .status-expired    { color: #94a3b8; }
+
+    .bg-status-pending    { background: rgba(251,191,36,.12); }
+    .bg-status-confirming { background: rgba(96,165,250,.12); }
+    .bg-status-completed  { background: rgba(74,222,128,.12); }
+    .bg-status-failed     { background: rgba(248,113,113,.12); }
+    .bg-status-refunded   { background: rgba(167,139,250,.12); }
+    .bg-status-expired    { background: rgba(148,163,184,.12); }
+
+    .spin { animation: spin 1.2s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="h-full text-white font-sans antialiased">
+
+  <!-- ── Header ───────────────────────────────────────────────────────────── -->
+  <header class="border-b border-white/10 px-6 py-4">
+    <div class="max-w-4xl mx-auto flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        <span class="text-xl font-bold tracking-tight">Swap<span class="text-brand-400">Pro</span></span>
+      </a>
+      <a href="/" class="text-sm text-slate-400 hover:text-white transition-colors flex items-center gap-1">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+        </svg>
+        New Swap
+      </a>
+    </div>
+  </header>
+
+  <!-- ── Main ─────────────────────────────────────────────────────────────── -->
+  <main class="max-w-4xl mx-auto px-4 py-10 space-y-6">
+
+    <!-- ── Search bar ─────────────────────────────────────────────────────── -->
+    <div class="glass rounded-2xl p-5">
+      <h1 class="text-lg font-semibold mb-4">Track Transaction</h1>
+      <div class="flex gap-3">
+        <input id="txIdInput" type="text" placeholder="Enter your transaction ID…"
+               class="flex-1 bg-slate-800 rounded-xl px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-brand-500"
+               autocomplete="off" spellcheck="false" />
+        <button id="trackBtn"
+                class="px-5 py-3 rounded-xl bg-brand-500 hover:bg-brand-600 font-semibold text-sm transition-colors whitespace-nowrap">
+          Track
+        </button>
+      </div>
+      <p id="inputError" class="hidden text-xs text-red-400 mt-2"></p>
+    </div>
+
+    <!-- ── Status panel (hidden until loaded) ─────────────────────────────── -->
+    <div id="statusPanel" class="hidden space-y-5 fade-in">
+
+      <!-- Status header card -->
+      <div id="statusCard" class="glass rounded-2xl p-6">
+
+        <!-- Top row: ID + live indicator -->
+        <div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+          <div>
+            <p class="text-xs text-slate-400 mb-0.5">Transaction ID</p>
+            <p id="displayTxId" class="font-mono text-sm break-all text-slate-200"></p>
+          </div>
+          <div id="liveIndicator" class="flex items-center gap-1.5 text-xs text-brand-400">
+            <span class="w-2 h-2 rounded-full bg-brand-400 pulse-dot inline-block"></span>
+            Live
+          </div>
+        </div>
+
+        <!-- Step tracker -->
+        <div class="flex items-center gap-0 mb-6" id="stepTracker">
+          <!-- Steps injected by JS -->
+        </div>
+
+        <!-- Status badge + label -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div id="statusBadge"
+               class="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold">
+            <span id="statusIcon"></span>
+            <span id="statusLabel"></span>
+          </div>
+          <p id="lastUpdated" class="text-xs text-slate-500"></p>
+        </div>
+      </div>
+
+      <!-- Details grid -->
+      <div class="grid sm:grid-cols-2 gap-4">
+
+        <!-- Swap details -->
+        <div class="glass rounded-2xl p-5 space-y-3">
+          <h2 class="text-sm font-semibold text-slate-300">Swap Details</h2>
+          <div class="space-y-2 text-sm">
+            <div class="flex justify-between">
+              <span class="text-slate-400">You send</span>
+              <span id="detailFrom" class="font-mono font-medium">—</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Expected out</span>
+              <span id="detailTo" class="font-mono font-medium text-brand-400">—</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-slate-400">Provider</span>
+              <span id="detailProvider" class="capitalize">—</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Addresses -->
+        <div class="glass rounded-2xl p-5 space-y-3">
+          <h2 class="text-sm font-semibold text-slate-300">Addresses</h2>
+          <div class="space-y-2 text-sm">
+            <div>
+              <p class="text-xs text-slate-400 mb-0.5">Deposit to</p>
+              <p id="detailPayin" class="font-mono text-xs text-slate-300 break-all bg-slate-800/60 rounded-lg px-2 py-1.5">—</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 mb-0.5">Receiving at</p>
+              <p id="detailPayout" class="font-mono text-xs text-slate-300 break-all bg-slate-800/60 rounded-lg px-2 py-1.5">—</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Blockchain hashes -->
+        <div class="glass rounded-2xl p-5 space-y-3 sm:col-span-2">
+          <h2 class="text-sm font-semibold text-slate-300">Blockchain Hashes</h2>
+          <div class="grid sm:grid-cols-2 gap-3 text-sm">
+            <div>
+              <p class="text-xs text-slate-400 mb-0.5">Deposit TX</p>
+              <p id="detailPayinHash" class="font-mono text-xs text-slate-300 break-all bg-slate-800/60 rounded-lg px-2 py-1.5">Awaiting deposit…</p>
+            </div>
+            <div>
+              <p class="text-xs text-slate-400 mb-0.5">Payout TX</p>
+              <p id="detailPayoutHash" class="font-mono text-xs text-slate-300 break-all bg-slate-800/60 rounded-lg px-2 py-1.5">Awaiting completion…</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Polling note -->
+      <p class="text-center text-xs text-slate-600">
+        Auto-refreshing every 10 seconds &nbsp;·&nbsp;
+        <button id="stopPollingBtn" class="underline hover:text-slate-400 transition-colors">Stop</button>
+        &nbsp;/&nbsp;
+        <button id="startPollingBtn" class="underline hover:text-slate-400 transition-colors hidden">Resume</button>
+      </p>
+    </div>
+
+    <!-- ── Loading skeleton ────────────────────────────────────────────────── -->
+    <div id="loadingState" class="hidden glass rounded-2xl p-8 text-center space-y-3">
+      <svg class="w-8 h-8 spin mx-auto text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+      </svg>
+      <p class="text-slate-400 text-sm">Fetching transaction status…</p>
+    </div>
+
+    <!-- ── Error state ─────────────────────────────────────────────────────── -->
+    <div id="errorState" class="hidden glass rounded-2xl p-8 text-center space-y-3">
+      <svg class="w-8 h-8 mx-auto text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+      </svg>
+      <p id="errorMsg" class="text-red-400 text-sm font-medium"></p>
+      <p class="text-slate-500 text-xs">Check your transaction ID and try again.</p>
+    </div>
+
+    <!-- ── Empty state ─────────────────────────────────────────────────────── -->
+    <div id="emptyState" class="glass rounded-2xl p-10 text-center space-y-3">
+      <svg class="w-10 h-10 mx-auto text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      <p class="text-slate-400 text-sm">Enter a transaction ID above to check its status.</p>
+      <p class="text-slate-600 text-xs">Your transaction ID was shown when you created the swap.</p>
+    </div>
+
+  </main>
+
+  <script src="/js/status.js"></script>
+</body>
+</html>
