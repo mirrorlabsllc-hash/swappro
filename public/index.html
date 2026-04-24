@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SwapPro – Smart Crypto Swap</title>
+  <meta name="description" content="Swap crypto instantly with the best rates. Non-custodial, secure, and fee-transparent." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50:'#f0fdf4', 400:'#4ade80', 500:'#22c55e', 600:'#16a34a', 700:'#15803d' },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #0f172a; }
+    .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.1); }
+    .pulse-dot { animation: pulse 2s cubic-bezier(0.4,0,0.6,1) infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+    .fade-in { animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+    select option { background: #1e293b; }
+  </style>
+</head>
+<body class="h-full text-white font-sans antialiased">
+
+  <!-- ── Header ───────────────────────────────────────────────────────────── -->
+  <header class="border-b border-white/10 px-6 py-4">
+    <div class="max-w-6xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <svg class="w-7 h-7 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/>
+        </svg>
+        <span class="text-xl font-bold tracking-tight">Swap<span class="text-brand-400">Pro</span></span>
+      </div>
+      <nav class="flex items-center gap-4 text-sm text-slate-400">
+        <a href="/status.html" class="hover:text-white transition-colors">Track Swap</a>
+        <span class="w-px h-4 bg-white/20"></span>
+        <label class="flex items-center gap-2 cursor-pointer select-none">
+          <span>Premium</span>
+          <div class="relative">
+            <input type="checkbox" id="premiumToggle" class="sr-only peer" />
+            <div class="w-9 h-5 bg-slate-700 rounded-full peer peer-checked:bg-brand-500 transition-colors"></div>
+            <div class="absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-4"></div>
+          </div>
+        </label>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ── Main ─────────────────────────────────────────────────────────────── -->
+  <main class="max-w-6xl mx-auto px-4 py-10 grid lg:grid-cols-5 gap-8">
+
+    <!-- ── Swap Card ──────────────────────────────────────────────────────── -->
+    <section class="lg:col-span-3">
+      <div class="glass rounded-2xl p-6 space-y-5">
+        <div class="flex items-center justify-between">
+          <h1 class="text-lg font-semibold">Swap Crypto</h1>
+          <span id="dealBadge" class="hidden text-xs px-2 py-1 rounded-full bg-brand-500/20 text-brand-400 font-medium"></span>
+        </div>
+
+        <!-- From -->
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">You Send</label>
+          <div class="flex gap-2">
+            <input id="amountIn" type="number" min="0" step="any" placeholder="0.00"
+                   class="flex-1 bg-slate-800 rounded-xl px-4 py-3 text-lg font-mono focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            <select id="fromCurrency"
+                    class="bg-slate-800 rounded-xl px-3 py-3 font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 min-w-[90px]">
+              <option value="btc">BTC</option>
+              <option value="eth" selected>ETH</option>
+              <option value="usdt">USDT</option>
+              <option value="sol">SOL</option>
+              <option value="bnb">BNB</option>
+              <option value="matic">MATIC</option>
+              <option value="ltc">LTC</option>
+            </select>
+          </div>
+          <p id="minAmountNote" class="text-xs text-slate-500 mt-1 hidden">Min: <span id="minAmountVal"></span></p>
+        </div>
+
+        <!-- Swap arrow -->
+        <div class="flex justify-center">
+          <button id="swapCurrencies"
+                  class="w-10 h-10 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center transition-colors"
+                  title="Swap currencies">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- To -->
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">You Receive</label>
+          <div class="flex gap-2">
+            <div id="amountOutDisplay"
+                 class="flex-1 bg-slate-800/60 rounded-xl px-4 py-3 text-lg font-mono text-slate-300 min-h-[48px] flex items-center">
+              <span id="amountOut" class="text-slate-500">—</span>
+            </div>
+            <select id="toCurrency"
+                    class="bg-slate-800 rounded-xl px-3 py-3 font-medium focus:outline-none focus:ring-2 focus:ring-brand-500 min-w-[90px]">
+              <option value="btc" selected>BTC</option>
+              <option value="eth">ETH</option>
+              <option value="usdt">USDT</option>
+              <option value="sol">SOL</option>
+              <option value="bnb">BNB</option>
+              <option value="matic">MATIC</option>
+              <option value="ltc">LTC</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Destination address -->
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Destination Address</label>
+          <input id="destAddress" type="text" placeholder="Your receiving wallet address"
+                 class="w-full bg-slate-800 rounded-xl px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <!-- Refund address (optional) -->
+        <div>
+          <label class="block text-xs text-slate-400 mb-1">Refund Address <span class="text-slate-600">(optional)</span></label>
+          <input id="refundAddress" type="text" placeholder="Your sending wallet address"
+                 class="w-full bg-slate-800 rounded-xl px-4 py-3 font-mono text-sm focus:outline-none focus:ring-2 focus:ring-brand-500" />
+        </div>
+
+        <!-- Error message -->
+        <p id="errorMsg" class="hidden text-sm text-red-400 bg-red-400/10 rounded-lg px-3 py-2"></p>
+
+        <!-- Submit -->
+        <button id="swapBtn"
+                class="w-full py-3.5 rounded-xl bg-brand-500 hover:bg-brand-600 font-semibold text-base transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>
+          <span id="swapBtnText">Enter amount to continue</span>
+        </button>
+
+        <!-- Trust signals -->
+        <div class="flex items-center justify-center gap-6 text-xs text-slate-500 pt-1">
+          <span class="flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 text-brand-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 1a4.5 4.5 0 00-4.5 4.5V9H5a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2h-.5V5.5A4.5 4.5 0 0010 1zm3 8V5.5a3 3 0 10-6 0V9h6z" clip-rule="evenodd"/>
+            </svg>
+            Non-custodial
+          </span>
+          <span class="flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 text-brand-400" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+            No registration
+          </span>
+          <span class="flex items-center gap-1">
+            <svg class="w-3.5 h-3.5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            Instant swap
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Info sidebar ────────────────────────────────────────────────────── -->
+    <aside class="lg:col-span-2 space-y-4">
+
+      <!-- Fee breakdown -->
+      <div id="feeBreakdown" class="glass rounded-2xl p-5 space-y-3 hidden fade-in">
+        <h2 class="text-sm font-semibold text-slate-300">Fee Breakdown</h2>
+        <div class="space-y-2 text-sm">
+          <div class="flex justify-between">
+            <span class="text-slate-400">Amount in</span>
+            <span id="fbAmountIn" class="font-mono">—</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-slate-400">Raw estimate</span>
+            <span id="fbRaw" class="font-mono">—</span>
+          </div>
+          <div class="flex justify-between text-amber-400">
+            <span>Platform fee</span>
+            <span id="fbFee" class="font-mono">—</span>
+          </div>
+          <div class="border-t border-white/10 pt-2 flex justify-between font-semibold">
+            <span>You receive</span>
+            <span id="fbOut" class="font-mono text-brand-400">—</span>
+          </div>
+          <div class="flex justify-between text-xs text-slate-500">
+            <span>Effective rate</span>
+            <span id="fbRate" class="font-mono">—</span>
+          </div>
+          <div class="flex justify-between text-xs text-slate-500">
+            <span>Margin</span>
+            <span id="fbMargin">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Route comparison -->
+      <div id="routeCard" class="glass rounded-2xl p-5 space-y-3 hidden fade-in">
+        <h2 class="text-sm font-semibold text-slate-300">Route</h2>
+        <div class="flex items-center gap-2 text-sm">
+          <span class="px-2 py-1 rounded-md bg-brand-500/20 text-brand-400 font-medium text-xs">ChangeNOW</span>
+          <span class="text-slate-500">Standard route</span>
+          <span id="premiumBadge" class="hidden px-2 py-1 rounded-md bg-purple-500/20 text-purple-400 font-medium text-xs">Premium</span>
+        </div>
+        <p class="text-xs text-slate-500">Rates sourced from ChangeNOW's liquidity network with real-time optimization.</p>
+      </div>
+
+      <!-- Track existing swap -->
+      <div class="glass rounded-2xl p-5 space-y-3">
+        <h2 class="text-sm font-semibold text-slate-300">Track a Swap</h2>
+        <p class="text-xs text-slate-500">Have a transaction ID? Check its status in real time.</p>
+        <div class="flex gap-2">
+          <input id="trackId" type="text" placeholder="Transaction ID"
+                 class="flex-1 bg-slate-800 rounded-xl px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-500" />
+          <button id="trackBtn"
+                  class="px-4 py-2 rounded-xl bg-slate-700 hover:bg-slate-600 text-sm font-medium transition-colors whitespace-nowrap">
+            Track
+          </button>
+        </div>
+      </div>
+
+    </aside>
+  </main>
+
+  <!-- ── Success modal ─────────────────────────────────────────────────────── -->
+  <div id="successModal"
+       class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden items-center justify-center p-4">
+    <div class="glass rounded-2xl p-6 max-w-md w-full space-y-4 fade-in">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-full bg-brand-500/20 flex items-center justify-center">
+          <svg class="w-5 h-5 text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <h2 class="text-lg font-semibold">Swap Created!</h2>
+      </div>
+
+      <div class="space-y-2 text-sm">
+        <div>
+          <p class="text-xs text-slate-400 mb-0.5">Transaction ID</p>
+          <p id="modalTxId" class="font-mono text-xs break-all bg-slate-800 px-3 py-2 rounded-lg"></p>
+        </div>
+        <div>
+          <p class="text-xs text-slate-400 mb-0.5">Send to this address</p>
+          <p id="modalPayinAddress" class="font-mono text-xs break-all bg-slate-800 px-3 py-2 rounded-lg"></p>
+        </div>
+        <p class="text-xs text-slate-400">Send exactly the correct amount to the address above. The swap will begin automatically once your deposit is detected.</p>
+      </div>
+
+      <div class="flex gap-3 pt-1">
+        <button id="trackSwapBtn"
+                class="flex-1 py-2.5 rounded-xl bg-brand-500 hover:bg-brand-600 font-semibold text-sm transition-colors">
+          Track Status
+        </button>
+        <button id="closeModal"
+                class="px-4 py-2.5 rounded-xl bg-slate-700 hover:bg-slate-600 text-sm font-medium transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/swap.js"></script>
+</body>
+</html>
